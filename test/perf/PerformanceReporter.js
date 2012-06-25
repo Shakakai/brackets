@@ -56,6 +56,12 @@ define(function (require, exports, module) {
             }
             
             printName = "Sum of all " + printName;
+        } else if (measureInfo.operation === "avg") {
+            if (Array.isArray(value)) {
+                value = value.reduce(function (a, b) { return a + b; }) / value.length;
+            }
+            
+            printName = "Average of " + printName;
         }
         
         record.name = printName;

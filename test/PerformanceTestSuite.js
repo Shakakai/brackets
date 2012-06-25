@@ -27,5 +27,6 @@ define(function (require, exports, module) {
     'use strict';
     
     // Each suite or spec must have this.performance = true to be filtered properly
+    require("perf/TypingSpeed");
     require("perf/Performance-test");
 });
