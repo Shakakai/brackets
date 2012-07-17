@@ -31,7 +31,7 @@ define(function (require, exports, module) {
         Commands,
         KeyBindingManager,
         Menus,
-        SpecRunnerUtils     = require("./SpecRunnerUtils.js"),
+        SpecRunnerUtils     = require("spec/SpecRunnerUtils"),
         StringsUtils        = require("utils/StringUtils"),
         Strings             = require("strings");
 
@@ -141,6 +141,53 @@ define(function (require, exports, module) {
                     expect($listItems.length).toBe(menuCountOriginal + 1);
                     expect($($listItems[menuCountOriginal]).attr("id")).toBe("menu-custom");
                 });
+            });
+
+            it("it should add menu to beginnging and end of menu section", function () {
+                // set up test menu and menu items
+                CommandManager.register("Brackets Test Command Custom 0", "custom.command0", function () {});
+                CommandManager.register("Brackets Test Command Custom 1", "custom.command1", function () {});
+                CommandManager.register("Brackets Test Command Custom 2", "custom.command2", function () {});
+                CommandManager.register("Brackets Test Command Custom 3", "custom.command3", function () {});
+                CommandManager.register("Brackets Test Command Custom 4", "custom.command4", function () {});
+                CommandManager.register("Brackets Test Command Custom 5", "custom.command5", function () {});
+                CommandManager.register("Brackets Test Command Custom 6", "custom.command6", function () {});
+                CommandManager.register("Brackets Test Command Custom 7", "custom.command7", function () {});
+                CommandManager.register("Brackets Test Command Custom 8", "custom.command8", function () {});
+                var menu = Menus.addMenu("Custom", "menu-custom");
+                menu.addMenuItem("custom.command0");
+                menu.addMenuItem("custom.command1");
+                menu.addMenuDivider();
+                menu.addMenuItem("custom.command2");
+                menu.addMenuItem("custom.command3");
+
+                // create mock menu sections
+                var menuSectionCmd0 = {sectionMarker: "custom.command0"},
+                    menuSectionCmd2 = {sectionMarker: "custom.command2"};
+
+                var listSelector = "#menu-custom > ul";
+
+                // Add new menu to END of menuSectionCmd0
+                var menuItem = menu.addMenuItem("custom.command4", null, Menus.LAST_IN_SECTION, menuSectionCmd0);
+                var $listItems = testWindow.$(listSelector).children();
+                expect($listItems.length).toBe(6);
+                expect($($listItems[2]).find("a#menu-custom-custom\\.command4").length).toBe(1);
+
+                // Add new menu to END of menuSectionCmd2
+                menuItem = menu.addMenuItem("custom.command5", null, Menus.LAST_IN_SECTION, menuSectionCmd2);
+                $listItems = testWindow.$(listSelector).children();
+                expect($($listItems[6]).find("a#menu-custom-custom\\.command5").length).toBe(1);
+
+                // Add new menu to BEGINNING of menuSectionCmd0
+                menuItem = menu.addMenuItem("custom.command6", null, Menus.FIRST_IN_SECTION, menuSectionCmd0);
+                $listItems = testWindow.$(listSelector).children();
+                expect($($listItems[0]).find("a#menu-custom-custom\\.command6").length).toBe(1);
+
+                // Add new menu to BEGINNING of menuSectionCmd2
+                menuItem = menu.addMenuItem("custom.command7", null, Menus.FIRST_IN_SECTION, menuSectionCmd2);
+                $listItems = testWindow.$(listSelector).children();
+                expect($($listItems[0]).find("a#menu-custom-custom\\.command6").length).toBe(1);
+
             });
 
             it("should not add duplicate menu", function () {
@@ -344,15 +391,20 @@ define(function (require, exports, module) {
                     CommandManager.register("Brackets Test Command Custom 0", "custom.command0", function () {});
                     CommandManager.register("Brackets Test Command Custom 1", "custom.command1", function () {});
                     var menu = Menus.addMenu("Custom", "menu-custom");
-
-                    var menuItem = null;
-                    menuItem = menu.addMenuItem("custom.command0");
-                    menuItem = menu.addMenuDivider();
+                    var menuItem = menu.addMenuItem("custom.command0");
                     menuItem = menu.addMenuItem("custom.command1");
-
+                    
+                    // add positioned divider
+                    menuItem = menu.addMenuDivider(Menus.AFTER, "custom.command0");
                     var $listItems = testWindow.$("#menu-custom > ul").children();
                     expect($listItems.length).toBe(3);
                     expect($($listItems[1]).find("hr.divider").length).toBe(1);
+
+                    // add divider to end
+                    menuItem = menu.addMenuDivider();
+                    $listItems = testWindow.$("#menu-custom > ul").children();
+                    expect($listItems.length).toBe(4);
+                    expect($($listItems[3]).find("hr.divider").length).toBe(1);
                 });
             });
         });
@@ -432,7 +484,11 @@ define(function (require, exports, module) {
                         $shortcut = $menuItem.find(".menu-shortcut");
                     
                     // verify key data instead of platform-specific labels
-                    expect($shortcut.data("key")).toBe("Ctrl-9");
+                    if (testWindow.brackets.platform === "win") {
+                        expect($shortcut.data("key")).toBe("Ctrl-9");
+                    } else if (testWindow.brackets.platform === "mac") {
+                        expect($shortcut.data("key")).toBe("Cmd-9");
+                    }
                     
                     // change keyboard shortcut
                     KeyBindingManager.addBinding("custom.command0", "Alt-8");
@@ -458,6 +514,18 @@ define(function (require, exports, module) {
                 var command = CommandManager.register("Brackets Test Command Custom 2", "custom.command2", function () {});
                 menuItem = cmenu.addMenuItem(command);
                 expect(menuItem).toBeTruthy();
+
+                // add positioned divider
+                menuItem = cmenu.addMenuDivider(Menus.BEFORE, "custom.command2");
+                var $listItems = testWindow.$("#test-cmenu > ul").children();
+                expect($listItems.length).toBe(3);
+                expect($($listItems[1]).find("hr.divider").length).toBe(1);
+
+                // add divider to end
+                menuItem = cmenu.addMenuDivider();
+                $listItems = testWindow.$("#test-cmenu > ul").children();
+                expect($listItems.length).toBe(4);
+                expect($($listItems[3]).find("hr.divider").length).toBe(1);
 
                 // duplicate command in Menu
                 menuItem = cmenu.addMenuItem("custom.command1");
